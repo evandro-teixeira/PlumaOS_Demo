@@ -1,0 +1,3 @@
+[submodule "Library-FRDM-KL25Z"]
+	path = Library-FRDM-KL25Z
+	url = https://github.com/evandro-teixeira/Library-FRDM-KL25Z.git
