@@ -29,20 +29,126 @@
  */
 
 #include "MKL25Z4.h"
+#include "../Library-FRDM-KL25Z/externs.h"
+#include "../PlumaOS/PlumaOs.h"
 
-static int i = 0;
+
+#define LED_RED     GPIOB,18
+#define LED_GREEN   GPIOB,19
+#define LED_BLUE    GPIOD,1
+#define SETUP       0
+#define LOOP        1
+#define OFF         1
+#define ON          0
+
+
+void task_led_red(void);
+void task_led_green(void);
+void task_led_blue(void);
+
+
+uint8_t IdTaskRed = 0;
+uint8_t IdTaskGreen = 0;
+uint8_t IdTaskBlue = 0;
+
 
 int main(void)
 {
-
     /* Write your code here */
-
     /* This for loop should be replaced. By default this loop allows a single stepping. */
-    for (;;) {
-        i++;
+
+    PlumaOS_Init();
+
+    IdTaskRed     = PlumaOS_TaskAdd(task_led_red,PlumaOS_PriorityNormal,PlumaOS_TaskReady);
+    IdTaskGreen   = PlumaOS_TaskAdd(task_led_green,PlumaOS_PriorityNormal,PlumaOS_TaskReady);
+    IdTaskBlue    = PlumaOS_TaskAdd(task_led_blue,PlumaOS_PriorityNormal,PlumaOS_TaskReady);
+
+    PlumaOS_StartScheduler();
+
+    for (;;)
+    {
+
     }
     /* Never leave main */
     return 0;
+}
+
+/**
+ *
+ */
+void task_led_red(void)
+{
+    static uint8_t state = 0;
+
+    switch(state)
+    {
+        case SETUP:
+        {
+            gpio_Init(LED_RED,OUTPUT,NO_PULL_RESISTOR);
+            gpio_Set(LED_RED,OFF);
+            state = 1;
+        }
+        break;
+        case LOOP:
+        default:
+        {
+            gpio_Toggle(LED_RED);
+            PlumaOS_TaskDelay(IdTaskRed,1000);
+        }
+        break;
+    }
+}
+
+/**
+ *
+ */
+void task_led_green(void)
+{
+    static uint8_t state = 0;
+
+    switch(state)
+    {
+        case SETUP:
+        {
+            gpio_Init(LED_GREEN,OUTPUT,NO_PULL_RESISTOR);
+            gpio_Set(LED_GREEN,OFF);
+            state = 1;
+        }
+        break;
+        case LOOP:
+        default:
+        {
+            gpio_Toggle(LED_GREEN);
+            PlumaOS_TaskDelay(IdTaskGreen,2000);
+        }
+        break;
+    }
+}
+
+/**
+ *
+ */
+void task_led_blue(void)
+{
+    static uint8_t state = 0;
+
+    switch(state)
+    {
+        case SETUP:
+        {
+            gpio_Init(LED_BLUE,OUTPUT,NO_PULL_RESISTOR);
+            gpio_Set(LED_BLUE,ON);
+            state = 1;
+        }
+        break;
+        case LOOP:
+        default:
+        {
+            gpio_Toggle(LED_BLUE);
+            PlumaOS_TaskDelay(IdTaskBlue,3000);
+        }
+        break;
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////
 // EOF
