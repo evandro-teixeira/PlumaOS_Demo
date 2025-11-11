@@ -28,18 +28,42 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @file main.c
+ * @brief PlumaOS demo application for the FRDM-KL25Z board.
+ *
+ * @details
+ * This file contains the demo application that initializes PlumaOS, creates
+ * three LED blink tasks and starts the RTOS scheduler. The example is intended
+ * to demonstrate basic PlumaOS usage: task creation, task delays and simple
+ * peripheral access (GPIO) via the board drivers in Library-FRDM-KL25Z.
+ *
+ * The three tasks implemented are:
+ * - task_led_red   : toggles the red LED with a 1000 ms delay
+ * - task_led_green : toggles the green LED with a 2000 ms delay
+ * - task_led_blue  : toggles the blue LED with a 3000 ms delay
+ *
+ * @author
+ * Example adapted from original Freescale demo and PlumaOS integration.
+ */
+
 #include "MKL25Z4.h"
 #include "../Library-FRDM-KL25Z/externs.h"
 #include "../PlumaOS/PlumaOs.h"
 
 
-#define LED_RED     GPIOB,18
-#define LED_GREEN   GPIOB,19
-#define LED_BLUE    GPIOD,1
-#define SETUP       0
-#define LOOP        1
-#define OFF         1
-#define ON          0
+/** @brief LED pin definitions: (port, pin) */
+#define LED_RED     GPIOB,18  /**< Red LED: port GPIOB pin 18 */
+#define LED_GREEN   GPIOB,19  /**< Green LED: port GPIOB pin 19 */
+#define LED_BLUE    GPIOD,1   /**< Blue LED: port GPIOD pin 1 */
+
+/** @brief Task state identifiers used inside each LED task */
+#define SETUP       0  /**< Initial setup state: configure GPIO */
+#define LOOP        1  /**< Main loop state: toggle LED and delay */
+
+/** @brief Logical level definitions for gpio_Set */
+#define OFF         1  /**< LED off (active low on hardware) */
+#define ON          0  /**< LED on (active low on hardware) */
 
 
 void task_led_red(void);
@@ -47,24 +71,35 @@ void task_led_green(void);
 void task_led_blue(void);
 
 
-uint8_t IdTaskRed = 0;
-uint8_t IdTaskGreen = 0;
-uint8_t IdTaskBlue = 0;
+/** @brief Task identifiers returned by PlumaOS_TaskAdd */
+uint8_t IdTaskRed = 0;    /**< Red task id */
+uint8_t IdTaskGreen = 0;  /**< Green task id */
+uint8_t IdTaskBlue = 0;   /**< Blue task id */
 
 
+/**
+ * @brief Application entry point.
+ *
+ * @details
+ * Initializes the PlumaOS kernel, registers three LED tasks with normal priority
+ * and starts the scheduler. After PlumaOS_StartScheduler() the scheduler takes
+ * control and main should never return.
+ *
+ * @return Never returns under normal operation (returns 0 to satisfy compiler).
+ */
 int main(void)
 {
-    /* Write your code here */
-    /* This for loop should be replaced. By default this loop allows a single stepping. */
-
+    /* Initialize RTOS and create tasks */
     PlumaOS_Init();
 
     IdTaskRed     = PlumaOS_TaskAdd(task_led_red,PlumaOS_PriorityNormal,PlumaOS_TaskReady);
     IdTaskGreen   = PlumaOS_TaskAdd(task_led_green,PlumaOS_PriorityNormal,PlumaOS_TaskReady);
     IdTaskBlue    = PlumaOS_TaskAdd(task_led_blue,PlumaOS_PriorityNormal,PlumaOS_TaskReady);
 
+    /* Start the RTOS scheduler */
     PlumaOS_StartScheduler();
 
+    /* Fallback loop - should never be reached */
     for (;;)
     {
 
@@ -74,7 +109,16 @@ int main(void)
 }
 
 /**
+ * @brief Red LED task.
  *
+ * @details
+ * The task uses a simple state machine with a SETUP state to initialize the GPIO
+ * and a LOOP state where the LED is toggled and the task delays itself using
+ * PlumaOS_TaskDelay. The delay time controls the blink frequency.
+ *
+ * Uses:
+ * - gpio_Init, gpio_Set, gpio_Toggle from Library-FRDM-KL25Z drivers
+ * - PlumaOS_TaskDelay to yield the task for the specified ticks (milliseconds)
  */
 void task_led_red(void)
 {
@@ -100,7 +144,10 @@ void task_led_red(void)
 }
 
 /**
+ * @brief Green LED task.
  *
+ * @details
+ * Same structure as task_led_red but with a different blink period.
  */
 void task_led_green(void)
 {
@@ -126,7 +173,11 @@ void task_led_green(void)
 }
 
 /**
+ * @brief Blue LED task.
  *
+ * @details
+ * Same structure as the other LED tasks; initial gpio_Set sets the LED ON
+ * to demonstrate different initial conditions. Has the longest blink period.
  */
 void task_led_blue(void)
 {
